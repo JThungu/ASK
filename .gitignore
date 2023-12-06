@@ -1,0 +1,3 @@
+qlite3
+*.pyc
+env/
