@@ -1,7 +1,19 @@
+from django.contrib.auth.models import AbstractUser, User
 from django.db import models
-from django.contrib.auth.models import User
 from django.utils import timezone
 
+class CustomUser(AbstractUser):
+    """user email verification"""
+    email_verified = models.BooleanField(default=False)
+
+    class Meta:
+        # Add unique related_name arguments to avoid clashes
+        abstract = False  # Set abstract to False to avoid system check errors
+        swappable = 'AUTH_USER_MODEL'
+        unique_together = ('email_verified',)
+
+CustomUser._meta.get_field('groups').related_query_name = 'custom_user_groups'
+CustomUser._meta.get_field('user_permissions').related_query_name = 'custom_user_permissions'
 
 class Survey(models.Model):
     """A survey created by a user."""
@@ -39,3 +51,4 @@ class Answer(models.Model):
 
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
     option = models.ForeignKey(Option, on_delete=models.CASCADE)
+
