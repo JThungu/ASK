@@ -1,13 +1,14 @@
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
+#from .views.auth import CustomSignupView
 
 from . import views
 
 urlpatterns = [
     path("", views.landing, name="landing"),
-    path("login/", views.auth.login, name="login"),
-    path("signup/", views.auth.signup, name="signup"),
+    path("accounts/", include('allauth.urls')),
+    #   path("accounts/signup/", views.CustomSignupView.as_view(), name="account_signup"),# Add this line
     path("surveys/", views.survey.survey_list, name="survey-list"),
     path("surveys/<int:pk>/", views.survey.detail, name="survey-detail"),
     path("surveys/create/", views.survey.create, name="survey-create"),
@@ -22,7 +23,7 @@ urlpatterns = [
     path("surveys/<int:pk>/start/", views.survey.start, name="survey-start"),
     path("surveys/<int:survey_pk>/submit/<int:sub_pk>/", views.survey.submit, name="survey-submit"),
     path("surveys/<int:pk>/thanks/", views.survey.thanks, name="survey-thanks"),
-    path("admin", admin.site.urls),
+    path("admin/", admin.site.urls),
 ]
 
 if settings.DEBUG:

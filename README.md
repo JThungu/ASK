@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ASK Survey Web App
 
 **Simplifying Web Development through Collaborative Surveys**
