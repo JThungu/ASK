@@ -110,7 +110,7 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "testdev161@gmail.com"
-EMAIL_HOST_PASSWORD = "BigPacreriri123"
+EMAIL_HOST_PASSWORD = "edhu oovr lawy upxx"
 DEFAULT_FROM_EMAIL = "testdev161@gmail.com"
 try:
     from .local_settings import *
