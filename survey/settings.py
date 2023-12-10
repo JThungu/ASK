@@ -1,11 +1,12 @@
 import os
 from pathlib import Path
+from decouple import config
 
 #BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
-SECRET_KEY = "ee38201882f469847d145b1911207a49920f15f83806b798ec85b3d180460cf0"
-DEBUG = True
+SECRET_KEY = config('SECRET_KEY', default='your_default_secret_key')
+DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -32,8 +33,8 @@ SOCIALACCOUNT_PROVIDERS = {
             "access_type": "online",
         },
         "APP": {
-            "client_id": "185054012298-4c8hno7ehb27of48uij0aeh6885d5hre.apps.googleusercontent.com",
-            "secret": "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",
+            "client_id": config('GOOGLE_CLIENT_ID', default='your_default_client_id'),
+            "secret": config('GOOGLE_CLIENT_SECRET', default='your_default_client_secret'),
             "redirect_uris": ["http://localhost:8000/accounts/google/login/callback/"],
         }
     }
@@ -109,8 +110,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "testdev161@gmail.com"
-EMAIL_HOST_PASSWORD = "edhu oovr lawy upxx"
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your_default_email_username')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your_default_email_password')
 DEFAULT_FROM_EMAIL = "testdev161@gmail.com"
 try:
     from .local_settings import *
