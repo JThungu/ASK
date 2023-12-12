@@ -1,36 +1,57 @@
+from django.http import HttpResponse
 from django.db import transaction
 from django.http import Http404
-from django.contrib.auth.decorators import login_required
-from django.forms.formsets import formset_factory
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from django.forms.formsets import formset_factory
+from ..models import Survey, UserProfile, Question, Answer, Submission
+from ..forms import SurveyForm, UserProfileForm, QuestionForm, OptionForm, AnswerForm, BaseAnswerFormSet
 
-from ..models import Survey, Question, Answer, Submission
-from ..forms import SurveyForm, QuestionForm, OptionForm, AnswerForm, BaseAnswerFormSet
+@login_required
+def create_profile(request):
+    try:
+        # Check if the user already has a profile
+        user_profile = UserProfile.objects.get(user=request.user)
+        return redirect("survey-list")
+    except UserProfile.DoesNotExist:
+        # If the user doesn't have a profile, process the profile creation form
+        if request.method == "POST":
+            form = UserProfileForm(request.POST, request.FILES)
+            if form.is_valid():
+                # Save the profile and associate it with the user
+                user_profile = form.save(commit=False)
+                user_profile.user = request.user
+                user_profile.save()
+                return redirect("survey-list")
+        else:
+            form = UserProfileForm()
 
+        return render(request, 'survey/create_profile.html', {'form': form})
 
 @login_required
 def survey_list(request):
     """User can view all their surveys"""
-    surveys = Survey.objects.filter(creator=request.user).order_by("-created_at").all()
-    return render(request, "survey/list.html", {"surveys": surveys})
-
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+        surveys = Survey.objects.filter(creator=user_profile).order_by("-created_at").all()
+        return render(request, "survey/list.html", {"surveys": surveys})
+    except UserProfile.DoesNotExist:
+        # Handle the case where UserProfile does not exist for the current user
+        return redirect(reverse("create-profile"))
 
 @login_required
 def detail(request, pk):
     """User can view an active survey"""
     try:
         survey = Survey.objects.prefetch_related("question_set__option_set").get(
-            pk=pk, creator=request.user, is_active=True
+            pk=pk, creator=request.user.userprofile, is_active=True
         )
     except Survey.DoesNotExist:
         raise Http404()
 
     questions = survey.question_set.all()
 
-    # Calculate the results.
-    # This is a naive implementation and it could be optimised to hit the database less.
-    # See here for more info on how you might improve this code: https://docs.djangoproject.com/en/3.1/topics/db/aggregation/
     for question in questions:
         option_pks = question.option_set.values_list("pk", flat=True)
         total_answers = Answer.objects.filter(option_id__in=option_pks).count()
@@ -61,8 +82,14 @@ def create(request):
         form = SurveyForm(request.POST)
         if form.is_valid():
             survey = form.save(commit=False)
-            survey.creator = request.user
+
+            # Get or create UserProfile instance for the current user
+            user_profile, created = UserProfile.objects.get_or_create(user=request.user)
+
+            # Assign UserProfile instance to the Survey.creator field
+            survey.creator = user_profile
             survey.save()
+
             return redirect("survey-edit", pk=survey.id)
     else:
         form = SurveyForm()
@@ -73,19 +100,23 @@ def create(request):
 @login_required
 def delete(request, pk):
     """User can delete an existing survey"""
-    survey = get_object_or_404(Survey, pk=pk, creator=request.user)
+    survey = get_object_or_404(Survey, pk=pk, creator=request.user.userprofile)
+    
     if request.method == "POST":
         survey.delete()
+        return redirect("survey-list")
 
-    return redirect("survey-list")
+    return render(request, "survey/survey_confirm_delete.html", {"survey": survey})
 
 
 @login_required
 def edit(request, pk):
-    """User can add questions to a draft survey, then acitvate the survey"""
+    """User can add questions to a draft survey, then activate the survey"""
     try:
+        user_profile = request.user.userprofile
+
         survey = Survey.objects.prefetch_related("question_set__option_set").get(
-            pk=pk, creator=request.user, is_active=False
+            pk=pk, creator=user_profile, is_active=False
         )
     except Survey.DoesNotExist:
         raise Http404()
@@ -102,7 +133,13 @@ def edit(request, pk):
 @login_required
 def question_create(request, pk):
     """User can add a question to a draft survey"""
-    survey = get_object_or_404(Survey, pk=pk, creator=request.user)
+    try:
+        user_profile = request.user.userprofile
+
+        survey = get_object_or_404(Survey, pk=pk, creator=user_profile)
+    except Survey.DoesNotExist:
+        raise Http404()
+
     if request.method == "POST":
         form = QuestionForm(request.POST)
         if form.is_valid():
@@ -119,8 +156,14 @@ def question_create(request, pk):
 @login_required
 def option_create(request, survey_pk, question_pk):
     """User can add options to a survey question"""
-    survey = get_object_or_404(Survey, pk=survey_pk, creator=request.user)
-    question = Question.objects.get(pk=question_pk)
+    try:
+        user_profile = request.user.userprofile
+
+        survey = get_object_or_404(Survey, pk=survey_pk, creator=user_profile)
+        question = Question.objects.get(pk=question_pk)
+    except (Survey.DoesNotExist, Question.DoesNotExist):
+        raise Http404()
+
     if request.method == "POST":
         form = OptionForm(request.POST)
         if form.is_valid():
@@ -194,3 +237,5 @@ def thanks(request, pk):
     """Survey-taker receives a thank-you message."""
     survey = get_object_or_404(Survey, pk=pk, is_active=True)
     return render(request, "survey/thanks.html", {"survey": survey})
+
+

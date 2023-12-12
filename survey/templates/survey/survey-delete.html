@@ -1,0 +1,10 @@
+{% extends "_base.html" %}
+
+{% block title %}Survey Deleted - {{ survey.title }}{% endblock %}
+
+{% block content %}
+  <h2>Survey Deleted</h2>
+  <p>The survey "{{ survey.title }}" has been successfully deleted.</p>
+  <a href="{% url 'survey-list' %}">Back to Survey List</a>
+{% endblock %}
+

@@ -1,0 +1,14 @@
+{% extends "_base.html" %}
+
+{% block title %}Confirm Delete - {{ survey.title }}{% endblock %}
+
+{% block content %}
+  <h2>Confirm Delete</h2>
+  <p>Are you sure you want to delete the survey "{{ survey.title }}"?</p>
+  <form method="post" action="{% url 'survey-delete' survey.pk %}">
+    {% csrf_token %}
+    <button type="submit">Yes, delete</button>
+  </form>
+  <a href="{% url 'survey-list' %}">Cancel</a>
+{% endblock %}
+
