@@ -1,10 +1,10 @@
-# survey/urls.py
+from .views import create_profile, export_results_csv
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from . import views
 from .views.survey import create_profile
-from survey.views.survey import create_profile
+from .views.survey import export_results_csv
 
 urlpatterns = [
     path("", views.landing, name="landing"),
@@ -23,7 +23,8 @@ urlpatterns = [
     path("surveys/<int:pk>/start/", views.survey.start, name="survey-start"),
     path("surveys/<int:survey_pk>/submit/<int:sub_pk>/", views.survey.submit, name="survey-submit"),
     path("surveys/<int:pk>/thanks/", views.survey.thanks, name="survey-thanks"),
-    path("create-profile/", views.create_profile, name="create-profile"),  # Add this line
+    path("create-profile/", views.create_profile, name="create-profile"),
+    path("surveys/<int:pk>/export-csv/", views.export_results_csv, name="survey-export-csv"),  # Add this line for export view
     path("admin/", admin.site.urls),
 ]
 
@@ -31,5 +32,4 @@ if settings.DEBUG:
     import debug_toolbar
 
     urlpatterns += [path("__debug__/", include(debug_toolbar.urls))]
-
 

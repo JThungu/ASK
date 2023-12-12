@@ -1,12 +1,47 @@
+from django.template import loader
 from django.http import HttpResponse
-from django.db import transaction
 from django.http import Http404
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.urls import reverse
+from django.db import transaction
+from django.shortcuts import render, get_object_or_404, redirect
 from django.forms.formsets import formset_factory
 from ..models import Survey, UserProfile, Question, Answer, Submission
 from ..forms import SurveyForm, UserProfileForm, QuestionForm, OptionForm, AnswerForm, BaseAnswerFormSet
+import csv
+
+@login_required
+def export_results_csv(request, pk):
+    """User can export survey results in CSV format"""
+    try:
+        # Check if the user already has a profile
+        user_profile = UserProfile.objects.get(user=request.user)
+        survey = Survey.objects.prefetch_related("question_set__option_set").get(
+            pk=pk, creator=user_profile
+        )
+    except (UserProfile.DoesNotExist, Survey.DoesNotExist):
+        raise Http404()
+
+    if not survey.is_active:
+        return HttpResponse("Survey must be active to export results.", status=400)
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="{survey.title}_results.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(["Question", "Option", "Percentage"])
+
+    for question in survey.question_set.all():
+        for option in question.option_set.all():
+            num_answers = Answer.objects.filter(option=option).count()
+            total_answers = Answer.objects.filter(option__question=question).count()
+            option.percent = 100.0 * num_answers / total_answers if total_answers else 0
+
+            writer.writerow([question.prompt, option.text, f"{option.percent:.2f}%"])
+
+    return response
+
 
 @login_required
 def create_profile(request):

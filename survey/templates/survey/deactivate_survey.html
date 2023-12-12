@@ -1,0 +1,13 @@
+{% extends "_base.html" %}
+{% block title %}Deactivate Survey{% endblock %}
+
+{% block content %}
+<h2 class="ui header">Deactivate Survey</h2>
+<p>Are you sure you want to deactivate the survey "{{ survey.title }}"?</p>
+<form method="post" action="{% url 'survey-deactivate' survey.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="ui red button">Deactivate</button>
+</form>
+<a href="{% url 'survey-list' %}" class="ui button">Cancel</a>
+{% endblock %}
+
