@@ -29,57 +29,64 @@
     <!-- Add a button to trigger chart download -->
     <button id="downloadChart" class="ui primary button">Download Chart</button>
 
-    <!-- Add a script to create and update the chart -->
-    <script>
-        // Your user input chart data (use the actual data passed from Django)
-        var user_input_data = JSON.parse('{{ chart_data_json|escapejs }}');
+    <!-- Add social media sharing links -->
+    <div class="ui divider"></div>
+    <h1 class="ui header dividing">Share Survey</h1>
 
-        // Initialize arrays to hold labels and dataset values
-        var labels = user_input_data.labels;
-        var data = user_input_data.datasets[0].data;
+    <!-- WhatsApp sharing link -->
+    <a href="whatsapp://send?text=Check out this survey: {{ public_url }}" class="ui button">Share on WhatsApp</a>
 
-        // Chart data
-        var chartData = {
-            labels: labels,
-            datasets: [{
-                label: 'Survey Results',
-                data: data,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        };
+    <!-- Email sharing link -->
+    <a href="mailto:?subject=Survey&body=Check out this survey: {{ public_url }}" class="ui button">Share via Email</a>
 
-        // Get the canvas element
-        var ctx = document.getElementById('myChart').getContext('2d');
+    <!-- Twitter sharing link -->
+    <a href="https://twitter.com/intent/tweet?url={{ public_url }}" class="ui button">Share on Twitter</a>
 
-        // Create the chart
-        var myChart = new Chart(ctx, {
-            type: 'bar',
-            data: chartData,
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
+    <!-- ... existing code ... -->
+
+    <!-- Add a link to export results as CSV -->
+    <a href="{% url 'survey-export-csv' survey.pk %}" class="ui primary button">Export Results (CSV)</a>
+</div>
+
+<!-- Add a script to create and update the chart -->
+<script>
+    var user_input_data = JSON.parse('{{ chart_data_json|escapejs }}');
+
+    var labels = user_input_data.labels;
+    var data = user_input_data.datasets[0].data;
+
+    var chartData = {
+        labels: labels,
+        datasets: [{
+            label: 'Survey Results',
+            data: data,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    var ctx = document.getElementById('myChart').getContext('2d');
+
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: chartData,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
                 }
             }
-        });
+        }
+    });
 
-        // Add click event to the download button
-        document.getElementById('downloadChart').addEventListener('click', function () {
-            // Convert the chart to an image and trigger download
-            var downloadLink = document.createElement('a');
-            downloadLink.href = myChart.toBase64Image();
-            downloadLink.download = 'survey_chart.png';
-            downloadLink.click();
-        });
-    </script>
-    <!-- Add a link to export results as CSV -->
-    <a href="{% url 'survey-export-csv' survey.pk %}">
-        <div class="ui primary button">Export Results (CSV)</div>
-    </a>
-</div>
+    document.getElementById('downloadChart').addEventListener('click', function () {
+        var downloadLink = document.createElement('a');
+        downloadLink.href = myChart.toBase64Image();
+        downloadLink.download = 'survey_chart.png';
+        downloadLink.click();
+    });
+</script>
 {% endblock %}
 
