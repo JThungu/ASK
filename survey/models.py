@@ -30,12 +30,18 @@ class Question(models.Model):
     survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
     prompt = models.CharField(max_length=128)
 
+    def __str__(self):
+        return self.prompt
+
 
 class Option(models.Model):
     """A multi-choice option available as a part of a survey question."""
 
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     text = models.CharField(max_length=128)
+
+    def __str__(self):
+        return self.text
 
 
 class Submission(models.Model):
