@@ -10,6 +10,9 @@ from django.forms.formsets import formset_factory
 from ..models import Survey, UserProfile, Question, Answer, Submission
 from ..forms import SurveyForm, UserProfileForm, QuestionForm, OptionForm, AnswerForm, BaseAnswerFormSet
 import csv
+import json
+from django.db.models import Count
+
 
 @login_required
 def export_results_csv(request, pk):
@@ -75,6 +78,7 @@ def survey_list(request):
         # Handle the case where UserProfile does not exist for the current user
         return redirect(reverse("create-profile"))
 
+
 @login_required
 def detail(request, pk):
     """User can view an active survey"""
@@ -94,10 +98,25 @@ def detail(request, pk):
             num_answers = Answer.objects.filter(option=option).count()
             option.percent = 100.0 * num_answers / total_answers if total_answers else 0
 
+    # Prepare data for chart
+    chart_data = {
+        "labels": [question.prompt for question in questions],
+        "datasets": [{
+            "label": "Survey Results",
+            "data": [option.percent for question in questions for option in question.option_set.all()],
+            "backgroundColor": ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)'],
+            "borderColor": ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'],
+            "borderWidth": 1
+        }]
+    }
+
+    chart_data_json = json.dumps(chart_data)
+
     host = request.get_host()
     public_path = reverse("survey-start", args=[pk])
     public_url = f"{request.scheme}://{host}{public_path}"
     num_submissions = survey.submission_set.filter(is_complete=True).count()
+    
     return render(
         request,
         "survey/detail.html",
@@ -106,6 +125,7 @@ def detail(request, pk):
             "public_url": public_url,
             "questions": questions,
             "num_submissions": num_submissions,
+            "chart_data_json": chart_data_json,
         },
     )
 

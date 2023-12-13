@@ -84,9 +84,9 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 STATIC_URL = '/static/'
-#STATICFILES_DIRS = [
-#    BASE_DIR / "staticfiles",
-#]
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "survey", "static"),
+]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # Django Allauth settings
 ACCOUNT_EMAIL_VERIFICATION = "none"

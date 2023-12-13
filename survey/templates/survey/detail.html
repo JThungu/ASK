@@ -7,19 +7,76 @@
     <h3 class="ui header">You have {{ num_submissions }} submissions</h3>
     <h3 class="ui header">Survey URL: <a href="{{public_url}}">{{ public_url }}</a></h3>
     <h1 class="ui header dividing">Results</h1>
+
     {% for question in questions %}
-        <div class="ui basic padded segment left aligned">
-            <h4 class="ui header">{{ question.prompt }}</h4>
-            <ul>
-                {% for option in question.option_set.all %}
-                    <li>
-                        {{ option.text }}: {{ option.percent|floatformat }}%
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
+    <div class="ui basic padded segment left aligned">
+        <h4 class="ui header">{{ question.prompt }}</h4>
+        <ul>
+            {% for option in question.option_set.all %}
+            <li>
+                {{ option.text }}: {{ option.percent|floatformat }}%
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
     {% endfor %}
+
+    <!-- Add a canvas for the chart -->
+    <canvas id="myChart"></canvas>
+
     <div class="ui divider"></div>
+
+    <!-- Add a button to trigger chart download -->
+    <button id="downloadChart" class="ui primary button">Download Chart</button>
+
+    <!-- Add a script to create and update the chart -->
+    <script>
+        // Your user input chart data (use the actual data passed from Django)
+        var user_input_data = JSON.parse('{{ chart_data_json|escapejs }}');
+
+        // Initialize arrays to hold labels and dataset values
+        var labels = user_input_data.labels;
+        var data = user_input_data.datasets[0].data;
+
+        // Chart data
+        var chartData = {
+            labels: labels,
+            datasets: [{
+                label: 'Survey Results',
+                data: data,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        // Get the canvas element
+        var ctx = document.getElementById('myChart').getContext('2d');
+
+        // Create the chart
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Add click event to the download button
+        document.getElementById('downloadChart').addEventListener('click', function () {
+            // Convert the chart to an image and trigger download
+            var downloadLink = document.createElement('a');
+            downloadLink.href = myChart.toBase64Image();
+            downloadLink.download = 'survey_chart.png';
+            downloadLink.click();
+        });
+    </script>
+    <!-- Add a link to export results as CSV -->
     <a href="{% url 'survey-export-csv' survey.pk %}">
         <div class="ui primary button">Export Results (CSV)</div>
     </a>
